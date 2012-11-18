@@ -107,8 +107,8 @@ import android.widget.Scroller;
  * ActionBarTabsPager.java complete}
  */
 public class LoopViewPager extends ViewGroup {
-    private static final String TAG = "ViewPager";
-    private static final boolean DEBUG = true;
+    private static final String TAG = "LoopViewPager";
+    private static final boolean DEBUG = false;
 
     private static final boolean USE_CACHE = false;
 

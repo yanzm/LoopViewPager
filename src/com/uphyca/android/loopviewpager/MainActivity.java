@@ -17,8 +17,8 @@ public class MainActivity extends Activity {
         setContentView(R.layout.activity_main);
 
         LoopViewPager pager = (LoopViewPager) findViewById(R.id.pager);
+        pager.setAdapter(new MyFragmentStatePagerAdapter(getFragmentManager()));
         pager.setAdapter(new MyPagerAdapter());
-//        pager.setAdapter(new MyFragmentStatePagerAdapter(getFragmentManager()));
     }
 
     class MyFragmentStatePagerAdapter extends FragmentStatePagerAdapter {
