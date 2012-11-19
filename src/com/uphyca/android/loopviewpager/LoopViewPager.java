@@ -933,12 +933,6 @@ public class LoopViewPager extends ViewGroup {
                     ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
                 }
             }
-            // CHANGE
-            // if (mCurItem == 0 && ii == null) {
-            // // ぐるっと回って右端のページを左側に追加
-            // ii = addNewItem(N - 1, -1);
-            // curIndex++;
-            // }
 
             // ANALYZE 右側のページ
             float extraWidthRight = curItem.widthFactor;
@@ -971,11 +965,6 @@ public class LoopViewPager extends ViewGroup {
                         ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
                     }
                 }
-                // CHANGE
-                // if (mCurItem + 1 == N && ii == null) {
-                // // ぐるっと回って左端のページを右側に追加
-                // ii = addNewItem(0, itemIndex);
-                // }
             }
 
             calculatePageOffsets(curItem, curIndex, oldCurInfo);
