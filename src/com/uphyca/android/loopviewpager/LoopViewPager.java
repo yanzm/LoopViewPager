@@ -921,7 +921,7 @@ public class LoopViewPager extends ViewGroup {
                         break;
                     }
                     // ANALYZE 右にスクロールして、左側のページを削除
-                    if (pos == ii.position && !ii.scrolling) {
+                    if (pos == ii.position && !ii.scrolling && N > 3) {
                         mItems.remove(itemIndex);
                         mAdapter.destroyItem(this, pos, ii.object);
                         itemIndex--;
@@ -933,10 +933,19 @@ public class LoopViewPager extends ViewGroup {
                     itemIndex--;
                     ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
                 } else {
-                    // 左側のページを追加
-                    ii = addNewItem(pos, itemIndex + 1);
-                    extraWidthLeft += ii.widthFactor;
+                    
+                    // CHANGE
+                    ItemInfo lastInfo = mItems.get(mItems.size() - 1);
+                    if (pos == lastInfo.position) {
+                        ii = lastInfo;
+                        mItems.remove(lastInfo);
+                        mItems.add(itemIndex + 1, lastInfo);
+                    } else {
+                        // 左側のページを追加
+                        ii = addNewItem(pos, itemIndex + 1);
+                    }
                     curIndex++;
+                    extraWidthLeft += ii.widthFactor;
                     ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
                 }
             }
@@ -969,7 +978,7 @@ public class LoopViewPager extends ViewGroup {
                         ItemInfo firstInfo = mItems.get(0);
                         if (pos == firstInfo.position) {
                             ii = firstInfo;
-                            mItems.remove(0);
+                            mItems.remove(firstInfo);
                             mItems.add(itemIndex - 1, firstInfo);
                             curIndex--;
                         } else {
@@ -1123,6 +1132,11 @@ public class LoopViewPager extends ViewGroup {
             offset += ii.widthFactor + marginOffset;
         }
 
+        // CHANGE
+        if(N <= 3) {
+            requestLayout();
+        }
+        
         mNeedCalculatePageOffsets = false;
     }
 
