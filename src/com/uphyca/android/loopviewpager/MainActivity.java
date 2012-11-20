@@ -1,30 +1,47 @@
 package com.uphyca.android.loopviewpager;
 
+import android.app.ActionBar;
+import android.app.ActionBar.Tab;
+import android.app.ActionBar.TabListener;
 import android.app.Activity;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.app.FragmentTransaction;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-public class MainActivity extends Activity {
+public class MainActivity extends Activity implements TabListener {
 
+    LoopViewPager mPager;
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        LoopViewPager pager = (LoopViewPager) findViewById(R.id.pager);
-        pager.setAdapter(new MyFragmentStatePagerAdapter(getFragmentManager()));
-        pager.setAdapter(new MyPagerAdapter());
+        int pgaeNum = 4;
+        
+        mPager = (LoopViewPager) findViewById(R.id.pager);
+        mPager.setAdapter(new MyFragmentStatePagerAdapter(getFragmentManager(), pgaeNum));
+//        pager.setAdapter(new MyPagerAdapter());
+        
+        ActionBar actionBar = getActionBar();
+        actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
+        for(int i = 0; i < pgaeNum; i++) {
+            actionBar.addTab(actionBar.newTab().setText(i + "").setTabListener(this));
+        }
     }
 
     class MyFragmentStatePagerAdapter extends FragmentStatePagerAdapter {
 
-        public MyFragmentStatePagerAdapter(FragmentManager fm) {
+        int mPageNum = 0;
+        
+        public MyFragmentStatePagerAdapter(FragmentManager fm, int pageNum) {
             super(fm);
+            mPageNum = pageNum;
         }
 
         @Override
@@ -34,7 +51,7 @@ public class MainActivity extends Activity {
 
         @Override
         public int getCount() {
-            return 10;
+            return mPageNum;
         }
     }
 
@@ -90,5 +107,23 @@ public class MainActivity extends Activity {
             tv.setText(position + "");
             return tv;
         }
+    }
+
+    @Override
+    public void onTabReselected(Tab tab, FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+        
+    }
+
+    @Override
+    public void onTabSelected(Tab tab, FragmentTransaction ft) {
+        int position = getActionBar().getSelectedNavigationIndex();
+        mPager.setCurrentItem(position);
+    }
+
+    @Override
+    public void onTabUnselected(Tab tab, FragmentTransaction ft) {
+        // TODO Auto-generated method stub
+        
     }
 }

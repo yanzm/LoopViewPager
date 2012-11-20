@@ -108,7 +108,7 @@ import android.widget.Scroller;
  */
 public class LoopViewPager extends ViewGroup {
     private static final String TAG = "LoopViewPager";
-    private static final boolean DEBUG = false;
+    private static final boolean DEBUG = true;
 
     private static final boolean USE_CACHE = false;
 
@@ -497,7 +497,7 @@ public class LoopViewPager extends ViewGroup {
             item = mAdapter.getCount() - 1;
         }
         final int pageLimit = mOffscreenPageLimit;
-        
+
         // TODO CHANGE
         if (item > (mCurItem + pageLimit) || item < (mCurItem - pageLimit)) {
             // We are doing a jump by more than one page. To avoid
@@ -908,6 +908,13 @@ public class LoopViewPager extends ViewGroup {
 
             for (int i = 0; i < N; i++) {
                 final int pos = ((mCurItem - 1 - i) + N) % N;
+
+                // CHANGE
+                ItemInfo firstInfo = mItems.get(0);
+                if (pos == firstInfo.position && firstInfo.scrolling) {
+                    break;
+                }
+
                 // CHANGE
                 if (extraWidthLeft >= leftWidthNeeded && (pos < startPos || pos > endPos || itemIndex < 0)) {
                     if (ii == null) {
@@ -958,9 +965,18 @@ public class LoopViewPager extends ViewGroup {
                         itemIndex++;
                         ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
                     } else {
-                        // 右側のページを追加
-                        ii = addNewItem(pos, itemIndex);
-                        itemIndex++;
+                        // CHANGE
+                        ItemInfo firstInfo = mItems.get(0);
+                        if (pos == firstInfo.position) {
+                            ii = firstInfo;
+                            mItems.remove(0);
+                            mItems.add(itemIndex - 1, firstInfo);
+                            curIndex--;
+                        } else {
+                            // 右側のページを追加
+                            ii = addNewItem(pos, itemIndex);
+                            itemIndex++;
+                        }
                         extraWidthRight += ii.widthFactor;
                         ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
                     }
@@ -1072,8 +1088,11 @@ public class LoopViewPager extends ViewGroup {
         final int itemCount = mItems.size();
         // CHANGE
         curItem.offset = 0;
-        mFirstOffset = /*curItem.position == 0 ? curItem.offset :*/ -Float.MAX_VALUE;
-        mLastOffset = /*curItem.position == N - 1 ? curItem.offset + curItem.widthFactor - 1 :*/ Float.MAX_VALUE;
+        mFirstOffset = /* curItem.position == 0 ? curItem.offset : */-Float.MAX_VALUE;
+        mLastOffset = /*
+                       * curItem.position == N - 1 ? curItem.offset +
+                       * curItem.widthFactor - 1 :
+                       */Float.MAX_VALUE;
 
         float offset = curItem.offset;
         int pos = curItem.position - 1;
@@ -2023,7 +2042,7 @@ public class LoopViewPager extends ViewGroup {
                 targetPage = Math.max(firstItem.position, Math.min(targetPage, lastItem.position));
             }
         }
-        
+
         return targetPage;
     }
 
