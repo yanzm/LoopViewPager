@@ -18,7 +18,6 @@ package com.uphyca.android.loopviewpager;
 
 import java.util.ArrayList;
 
-
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;

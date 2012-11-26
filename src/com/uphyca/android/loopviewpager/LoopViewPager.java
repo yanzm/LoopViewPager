@@ -39,6 +39,7 @@ import java.util.Comparator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.database.DataSetObserver;
+import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -71,6 +72,7 @@ import android.view.ViewGroup;
 import android.view.ViewParent;
 import android.view.accessibility.AccessibilityEvent;
 import android.view.animation.Interpolator;
+import android.widget.ImageView;
 import android.widget.Scroller;
 
 /**
@@ -491,25 +493,36 @@ public class LoopViewPager extends ViewGroup {
             return;
         }
 
-        if (item < 0) {
-            item = 0;
-        } else if (item >= mAdapter.getCount()) {
-            item = mAdapter.getCount() - 1;
-        }
         final int pageLimit = mOffscreenPageLimit;
 
-        // TODO CHANGE
-        if (item > (mCurItem + pageLimit) || item < (mCurItem - pageLimit)) {
-            // We are doing a jump by more than one page. To avoid
-            // glitches, we want to keep all current pages in the view
-            // until the scroll ends.
-            for (int i = 0; i < mItems.size(); i++) {
-                mItems.get(i).scrolling = true;
+        final int N = mAdapter.getCount();
+        if (N != 2) {
+            if (item < 0) {
+                item = 0;
+            } else if (item >= N) {
+                item = N - 1;
+            }
+
+            // TODO CHANGE
+            if (item > (mCurItem + pageLimit) || item < (mCurItem - pageLimit)) {
+                // We are doing a jump by more than one page. To avoid
+                // glitches, we want to keep all current pages in the view
+                // until the scroll ends.
+                for (int i = 0; i < mItems.size(); i++) {
+                    mItems.get(i).scrolling = true;
+                }
             }
         }
+
         final boolean dispatchSelected = mCurItem != item;
+        // CHANGE
+        int orgItem = item;
+        if(N == 2 && item < 0) {
+            item = mCurItem == 0 ? 1 : 0;
+        }
         populate(item);
-        final ItemInfo curInfo = infoForPosition(item);
+        // CHANGE
+        final ItemInfo curInfo = infoForPosition(orgItem);
         int destX = 0;
         if (curInfo != null) {
             final int width = getWidth();
@@ -840,6 +853,7 @@ public class LoopViewPager extends ViewGroup {
     }
 
     void populate(int newCurrentItem) {
+
         ItemInfo oldCurInfo = null;
         if (mCurItem != newCurrentItem) {
             oldCurInfo = infoForPosition(mCurItem);
@@ -900,95 +914,117 @@ public class LoopViewPager extends ViewGroup {
         // pages requested to either side, whichever is larger.
         // If we have no current item we have no work to do.
         if (curItem != null) {
-            // ANALYZE 左側のページ
-            float extraWidthLeft = 0.f;
-            int itemIndex = curIndex - 1;
-            ItemInfo ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
-            final float leftWidthNeeded = 2.f - curItem.widthFactor;
 
-            for (int i = 0; i < N; i++) {
-                final int pos = ((mCurItem - 1 - i) + N) % N;
+            if (N > 1) {
+                // ANALYZE 左側のページ
+                float extraWidthLeft = 0.f;
+                int itemIndex = curIndex - 1;
+                ItemInfo ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
+                final float leftWidthNeeded = 2.f - curItem.widthFactor;
 
-                // CHANGE
-                ItemInfo firstInfo = mItems.get(0);
-                if (pos == firstInfo.position && firstInfo.scrolling) {
-                    break;
-                }
+                for (int i = 0; i < N; i++) {
+                    final int pos = ((mCurItem - 1 - i) + N) % N;
 
-                // CHANGE
-                if (extraWidthLeft >= leftWidthNeeded && (pos < startPos || pos > endPos || itemIndex < 0)) {
-                    if (ii == null) {
+                    // CHANGE
+                    ItemInfo firstInfo = mItems.get(0);
+                    if (pos == firstInfo.position && firstInfo.scrolling) {
                         break;
                     }
-                    // ANALYZE 右にスクロールして、左側のページを削除
-                    if (pos == ii.position && !ii.scrolling && N > 3) {
-                        mItems.remove(itemIndex);
-                        mAdapter.destroyItem(this, pos, ii.object);
-                        itemIndex--;
-                        curIndex--;
-                        ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
-                    }
-                } else if (ii != null && pos == ii.position) {
-                    extraWidthLeft += ii.widthFactor;
-                    itemIndex--;
-                    ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
-                } else {
-                    
-                    // CHANGE
-                    ItemInfo lastInfo = mItems.get(mItems.size() - 1);
-                    if (pos == lastInfo.position) {
-                        ii = lastInfo;
-                        mItems.remove(lastInfo);
-                        mItems.add(itemIndex + 1, lastInfo);
-                    } else {
-                        // 左側のページを追加
-                        ii = addNewItem(pos, itemIndex + 1);
-                    }
-                    curIndex++;
-                    extraWidthLeft += ii.widthFactor;
-                    ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
-                }
-            }
 
-            // ANALYZE 右側のページ
-            float extraWidthRight = curItem.widthFactor;
-            itemIndex = curIndex + 1;
-            if (extraWidthRight < 2.f) {
-                ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
-                for (int i = 0; i < N; i++) {
-                    final int pos = ((mCurItem + 1 + i) + N) % N;
                     // CHANGE
-                    if (extraWidthRight >= 2.f && (pos > endPos || pos < startPos || itemIndex >= mItems.size())) {
+                    if (extraWidthLeft >= leftWidthNeeded && (pos < startPos || pos > endPos || itemIndex < 0)) {
                         if (ii == null) {
                             break;
                         }
-
-                        // ANALYZE 左にスクロールして、右側のページを削除
-                        if (pos == ii.position && !ii.scrolling) {
+                        // ANALYZE 右にスクロールして、左側のページを削除
+                        if (pos == ii.position && !ii.scrolling && N > 3) {
                             mItems.remove(itemIndex);
                             mAdapter.destroyItem(this, pos, ii.object);
-                            ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                            itemIndex--;
+                            curIndex--;
+                            ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
                         }
                     } else if (ii != null && pos == ii.position) {
-                        extraWidthRight += ii.widthFactor;
-                        itemIndex++;
-                        ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                        extraWidthLeft += ii.widthFactor;
+                        itemIndex--;
+                        ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
                     } else {
                         // CHANGE
-                        ItemInfo firstInfo = mItems.get(0);
-                        if (pos == firstInfo.position) {
-                            ii = firstInfo;
-                            mItems.remove(firstInfo);
-                            mItems.add(itemIndex - 1, firstInfo);
-                            curIndex--;
+                        ItemInfo lastInfo = mItems.get(mItems.size() - 1);
+                        if (pos == lastInfo.position) {
+                            ii = lastInfo;
+                            mItems.remove(lastInfo);
+                            mItems.add(itemIndex + 1, lastInfo);
                         } else {
-                            // 右側のページを追加
-                            ii = addNewItem(pos, itemIndex);
-                            itemIndex++;
+                            // 左側のページを追加
+                            ii = addNewItem(pos, itemIndex + 1);
                         }
-                        extraWidthRight += ii.widthFactor;
-                        ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                        curIndex++;
+                        extraWidthLeft += ii.widthFactor;
+                        ii = itemIndex >= 0 ? mItems.get(itemIndex) : null;
                     }
+                }
+
+                // ANALYZE 右側のページ
+                float extraWidthRight = curItem.widthFactor;
+                itemIndex = curIndex + 1;
+                if (extraWidthRight < 2.f) {
+                    ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                    for (int i = 0; i < N; i++) {
+                        final int pos = ((mCurItem + 1 + i) + N) % N;
+                        // CHANGE
+                        if (extraWidthRight >= 2.f && (pos > endPos || pos < startPos || itemIndex >= mItems.size())) {
+                            if (ii == null) {
+                                break;
+                            }
+
+                            // ANALYZE 左にスクロールして、右側のページを削除
+                            if (pos == ii.position && !ii.scrolling) {
+                                mItems.remove(itemIndex);
+                                mAdapter.destroyItem(this, pos, ii.object);
+                                ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                            }
+                        } else if (ii != null && pos == ii.position) {
+                            extraWidthRight += ii.widthFactor;
+                            itemIndex++;
+                            ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                        } else {
+                            // CHANGE
+                            ItemInfo firstInfo = mItems.get(0);
+                            if (firstInfo.position == -1 && mItems.size() > 1) {
+                                firstInfo = mItems.get(1);
+                            }
+                            if (pos == firstInfo.position && N > 1) {
+                                ii = firstInfo;
+                                mItems.remove(firstInfo);
+                                mItems.add(itemIndex - 1, firstInfo);
+                                curIndex--;
+                            } else {
+                                // 右側のページを追加
+                                ii = addNewItem(pos, itemIndex);
+                                itemIndex++;
+                            }
+                            extraWidthRight += ii.widthFactor;
+                            ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                        }
+                    }
+                }
+            }
+
+            // CHANGE
+            if (N == 2) {
+                if (mItems.size() < 3) {
+                    ItemInfo lastInfo = mItems.get(mItems.size() - 1);
+                    // 左側のダミーページを追加
+                    ItemInfo ii = new ItemInfo();
+                    ii.position = -1;
+                    ii.object = null;
+                    ii.widthFactor = lastInfo.widthFactor;
+                    ImageView dummyView = new ImageView(getContext());
+                    dummyView.setTag(-1);
+                    this.addView(dummyView);
+                    mItems.add(0, ii);
+                    curIndex++;
                 }
             }
 
@@ -1009,6 +1045,7 @@ public class LoopViewPager extends ViewGroup {
         // Check width measurement of current pages. Update LayoutParams as
         // needed.
         final int childCount = getChildCount();
+
         for (int i = 0; i < childCount; i++) {
             final View child = getChildAt(i);
             final LayoutParams lp = (LayoutParams) child.getLayoutParams();
@@ -1108,7 +1145,8 @@ public class LoopViewPager extends ViewGroup {
         // Previous pages
         for (int i = curIndex - 1; i >= 0; i--, pos--) {
             final ItemInfo ii = mItems.get(i);
-            while (pos > ii.position) {
+            // CHANGE
+            while (pos > ii.position && N != 2) {
                 offset -= mAdapter.getPageWidth(pos--) + marginOffset;
             }
             offset -= ii.widthFactor + marginOffset;
@@ -1133,10 +1171,10 @@ public class LoopViewPager extends ViewGroup {
         }
 
         // CHANGE
-        if(N <= 3) {
+        if (N <= 3) {
             requestLayout();
         }
-        
+
         mNeedCalculatePageOffsets = false;
     }
 
@@ -1250,8 +1288,35 @@ public class LoopViewPager extends ViewGroup {
     }
 
     ItemInfo infoForChild(View child) {
+        // CHANGE
+        final int N = mAdapter.getCount();
+        if (N == 2) {
+            boolean isDummy = false;
+            Object tag = child.getTag();
+            if (tag != null && tag instanceof Integer) {
+                int index = (Integer) tag;
+                if (index == -1) {
+                    // ダミーのビュー
+                    isDummy = true;
+                }
+            }
+
+            for (int i = 0; i < mItems.size(); i++) {
+                ItemInfo ii = mItems.get(i);
+                // CHANGE
+                if (isDummy && ii.position == -1) {
+                    return ii;
+                }
+                if (ii.position != -1 && mAdapter.isViewFromObject(child, ii.object)) {
+                    return ii;
+                }
+            }
+            return null;
+        }
+
         for (int i = 0; i < mItems.size(); i++) {
             ItemInfo ii = mItems.get(i);
+            // CHANGE
             if (mAdapter.isViewFromObject(child, ii.object)) {
                 return ii;
             }
@@ -1862,6 +1927,36 @@ public class LoopViewPager extends ViewGroup {
                 mIsBeingDragged = true;
                 setScrollState(SCROLL_STATE_DRAGGING);
 
+                // CHANGE
+                if(mAdapter.getCount() == 2) {
+                    int childCount = getChildCount();
+                    ImageView dummyView = null;
+                    View targetView = null;
+                    ItemInfo targetInfo = mItems.get(2);
+                    for(int i = 0; i < childCount; i++) {
+                        View child = getChildAt(i);
+                        if(child instanceof ImageView) {
+                            Object tag = child.getTag();
+                            if(tag != null && tag instanceof Integer) {
+                                int index = (Integer)tag;
+                                if(index == -1) {
+                                    dummyView = (ImageView) child;
+                                    continue;
+                                }
+                            }
+                        }
+                        
+                        if(mAdapter.isViewFromObject(child, targetInfo.object)) {
+                            targetView = child;
+                        }
+                    }
+                    
+                    if(targetView != null && dummyView != null) {
+                        Bitmap bitmap = getViewBitmap(targetView);
+                        dummyView.setImageBitmap(bitmap);
+                    }
+                }
+                
                 // Remember where the motion event started
                 mLastMotionX = mInitialMotionX = ev.getX();
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
@@ -2044,7 +2139,11 @@ public class LoopViewPager extends ViewGroup {
             targetPage = (int) (currentPage + pageOffset + 0.5f);
         }
 
-        if (mItems.size() > 0) {
+        // CHANGE
+        if (mAdapter.getCount() == 2 && currentPage == targetPage) {
+            // ページ数2で、前の画面に戻るとき
+            targetPage = -1;
+        } else if (mItems.size() > 0) {
             final ItemInfo firstItem = mItems.get(0);
             final ItemInfo lastItem = mItems.get(mItems.size() - 1);
 
@@ -2145,6 +2244,48 @@ public class LoopViewPager extends ViewGroup {
             }
         }
     }
+    
+    // CHANGE
+    Bitmap getViewBitmap(View v) {
+        v.clearFocus();
+        v.setPressed(false);
+
+        // もともとの設定値を保持しておく
+        boolean willNotCache = v.willNotCacheDrawing();
+        int color = v.getDrawingCacheBackgroundColor();
+
+        // 描画をキャッシュしないようにセット
+        v.setWillNotCacheDrawing(false);
+
+        // 描画キャッシュをクリアして、背景を透明にセット
+        v.setDrawingCacheBackgroundColor(0);
+
+        // 以前の描画キャッシュを破棄
+        if (color != 0) {
+          v.destroyDrawingCache();
+        }
+
+        // 新しく描画キャッシュを作成
+        v.buildDrawingCache();
+
+        // キャッシュ用の Bitmap を取得
+        Bitmap cacheBitmap = v.getDrawingCache();
+          if (cacheBitmap == null) {
+            Log.e(TAG, "failed getViewBitmap(" + v + ")",
+              new RuntimeException());
+            return null;
+          }
+
+        // キャッシュ用の Bitmap からドラッグ中の画像に使うための Bitmap を作成
+        Bitmap bitmap = Bitmap.createBitmap(cacheBitmap);
+
+        // もともとセットされていた描画キャッシュに戻す
+        v.destroyDrawingCache();
+        v.setWillNotCacheDrawing(willNotCache);
+        v.setDrawingCacheBackgroundColor(color);
+
+        return bitmap;
+      }
 
     /**
      * Start a fake drag of the pager.

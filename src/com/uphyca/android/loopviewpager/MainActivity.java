@@ -22,7 +22,7 @@ public class MainActivity extends Activity implements TabListener {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        int pgaeNum = 3;
+        int pgaeNum = 2;
         
         mPager = (LoopViewPager) findViewById(R.id.pager);
         mPager.setAdapter(new MyFragmentStatePagerAdapter(getFragmentManager(), pgaeNum));
