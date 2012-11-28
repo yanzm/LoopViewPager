@@ -110,7 +110,7 @@ import android.widget.Scroller;
  */
 public class LoopViewPager extends ViewGroup {
     private static final String TAG = "LoopViewPager";
-    private static final boolean DEBUG = true;
+    private static final boolean DEBUG = false;
 
     private static final boolean USE_CACHE = false;
 
@@ -517,7 +517,7 @@ public class LoopViewPager extends ViewGroup {
         final boolean dispatchSelected = mCurItem != item;
         // CHANGE
         int orgItem = item;
-        if(N == 2 && item < 0) {
+        if (N == 2 && item < 0) {
             item = mCurItem == 0 ? 1 : 0;
         }
         populate(item);
@@ -1821,6 +1821,12 @@ public class LoopViewPager extends ViewGroup {
                         Log.v(TAG, "Starting drag!");
                     mIsBeingDragged = true;
                     setScrollState(SCROLL_STATE_DRAGGING);
+
+                    // CHANGE
+                    if (mAdapter.getCount() == 2) {
+                        setupDummyView();
+                    }
+
                     mLastMotionX = dx > 0 ? mInitialMotionX + mTouchSlop : mInitialMotionX - mTouchSlop;
                     setScrollingCacheEnabled(true);
                 } else {
@@ -1890,6 +1896,35 @@ public class LoopViewPager extends ViewGroup {
         return mIsBeingDragged;
     }
 
+    private void setupDummyView() {
+        int childCount = getChildCount();
+        ImageView dummyView = null;
+        View targetView = null;
+        ItemInfo targetInfo = mItems.get(2);
+        for (int i = 0; i < childCount; i++) {
+            View child = getChildAt(i);
+            if (child instanceof ImageView) {
+                Object tag = child.getTag();
+                if (tag != null && tag instanceof Integer) {
+                    int index = (Integer) tag;
+                    if (index == -1) {
+                        dummyView = (ImageView) child;
+                        continue;
+                    }
+                }
+            }
+
+            if (mAdapter.isViewFromObject(child, targetInfo.object)) {
+                targetView = child;
+            }
+        }
+
+        if (targetView != null && dummyView != null) {
+            Bitmap bitmap = getViewBitmap(targetView);
+            dummyView.setImageBitmap(bitmap);
+        }
+    }
+
     @Override
     public boolean onTouchEvent(MotionEvent ev) {
         if (mFakeDragging) {
@@ -1928,35 +1963,10 @@ public class LoopViewPager extends ViewGroup {
                 setScrollState(SCROLL_STATE_DRAGGING);
 
                 // CHANGE
-                if(mAdapter.getCount() == 2) {
-                    int childCount = getChildCount();
-                    ImageView dummyView = null;
-                    View targetView = null;
-                    ItemInfo targetInfo = mItems.get(2);
-                    for(int i = 0; i < childCount; i++) {
-                        View child = getChildAt(i);
-                        if(child instanceof ImageView) {
-                            Object tag = child.getTag();
-                            if(tag != null && tag instanceof Integer) {
-                                int index = (Integer)tag;
-                                if(index == -1) {
-                                    dummyView = (ImageView) child;
-                                    continue;
-                                }
-                            }
-                        }
-                        
-                        if(mAdapter.isViewFromObject(child, targetInfo.object)) {
-                            targetView = child;
-                        }
-                    }
-                    
-                    if(targetView != null && dummyView != null) {
-                        Bitmap bitmap = getViewBitmap(targetView);
-                        dummyView.setImageBitmap(bitmap);
-                    }
+                if (mAdapter.getCount() == 2) {
+                    setupDummyView();
                 }
-                
+
                 // Remember where the motion event started
                 mLastMotionX = mInitialMotionX = ev.getX();
                 mActivePointerId = MotionEventCompat.getPointerId(ev, 0);
@@ -2102,7 +2112,8 @@ public class LoopViewPager extends ViewGroup {
         for (int i = 0; i < mItems.size(); i++) {
             ItemInfo ii = mItems.get(i);
             float offset;
-            if (!first && ii.position != lastPos + 1) {
+            // CHANGE
+            if (!first && ii.position != lastPos + 1 && mAdapter.getCount() != 2) {
                 // Create a synthetic item for a missing page.
                 ii = mTempItem;
                 ii.offset = lastOffset + lastWidth + marginOffset;
@@ -2140,9 +2151,17 @@ public class LoopViewPager extends ViewGroup {
         }
 
         // CHANGE
-        if (mAdapter.getCount() == 2 && currentPage == targetPage) {
-            // ページ数2で、前の画面に戻るとき
-            targetPage = -1;
+        if (mAdapter.getCount() == 2) {
+            // ページ数2
+            if (mCurItem == 1) {
+                // -1 1 0
+                if (currentPage == -1 && targetPage == 0) {
+                    targetPage = 1;
+                }
+                if (targetPage == 2) {
+                    targetPage = 0;
+                }
+            }
         } else if (mItems.size() > 0) {
             final ItemInfo firstItem = mItems.get(0);
             final ItemInfo lastItem = mItems.get(mItems.size() - 1);
@@ -2244,7 +2263,7 @@ public class LoopViewPager extends ViewGroup {
             }
         }
     }
-    
+
     // CHANGE
     Bitmap getViewBitmap(View v) {
         v.clearFocus();
@@ -2262,7 +2281,7 @@ public class LoopViewPager extends ViewGroup {
 
         // 以前の描画キャッシュを破棄
         if (color != 0) {
-          v.destroyDrawingCache();
+            v.destroyDrawingCache();
         }
 
         // 新しく描画キャッシュを作成
@@ -2270,11 +2289,10 @@ public class LoopViewPager extends ViewGroup {
 
         // キャッシュ用の Bitmap を取得
         Bitmap cacheBitmap = v.getDrawingCache();
-          if (cacheBitmap == null) {
-            Log.e(TAG, "failed getViewBitmap(" + v + ")",
-              new RuntimeException());
+        if (cacheBitmap == null) {
+            Log.e(TAG, "failed getViewBitmap(" + v + ")", new RuntimeException());
             return null;
-          }
+        }
 
         // キャッシュ用の Bitmap からドラッグ中の画像に使うための Bitmap を作成
         Bitmap bitmap = Bitmap.createBitmap(cacheBitmap);
@@ -2285,7 +2303,7 @@ public class LoopViewPager extends ViewGroup {
         v.setDrawingCacheBackgroundColor(color);
 
         return bitmap;
-      }
+    }
 
     /**
      * Start a fake drag of the pager.
