@@ -2150,8 +2150,10 @@ public class LoopViewPager extends ViewGroup {
             targetPage = (int) (currentPage + pageOffset + 0.5f);
         }
 
+        final int N = mAdapter.getCount();
+        
         // CHANGE
-        if (mAdapter.getCount() == 2) {
+        if (N == 2) {
             // ページ数2
             if (mCurItem == 1) {
                 // -1 1 0
@@ -2167,14 +2169,14 @@ public class LoopViewPager extends ViewGroup {
             final ItemInfo lastItem = mItems.get(mItems.size() - 1);
 
             // CHANGE
-            if (firstItem.position > lastItem.position && targetPage > lastItem.position && targetPage > currentPage) {
-                targetPage = lastItem.position;
-            } else {
-                // Only let the user target pages we have items for
-                targetPage = Math.max(firstItem.position, Math.min(targetPage, lastItem.position));
+            if (firstItem.position > lastItem.position) {
+                // 端にいる
+                if(targetPage >= N) {
+                    targetPage = targetPage % N;
+                }
             }
         }
-
+        
         return targetPage;
     }
 
