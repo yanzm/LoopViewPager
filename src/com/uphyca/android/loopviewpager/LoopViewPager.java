@@ -2147,7 +2147,12 @@ public class LoopViewPager extends ViewGroup {
         if (Math.abs(deltaX) > mFlingDistance && Math.abs(velocity) > mMinimumVelocity) {
             targetPage = velocity > 0 ? currentPage : currentPage + 1;
         } else {
-            targetPage = (int) (currentPage + pageOffset + 0.5f);
+            if(currentPage + pageOffset + 0.5f >= 0f) {
+                targetPage = (int) (currentPage + pageOffset + 0.5f);
+            }
+            else {
+                targetPage = (int) (currentPage + pageOffset + 0.5f - 1f);
+            }
         }
 
         final int N = mAdapter.getCount();
@@ -2164,6 +2169,7 @@ public class LoopViewPager extends ViewGroup {
                     targetPage = 0;
                 }
             }
+            
         } else if (mItems.size() > 0) {
             final ItemInfo firstItem = mItems.get(0);
             final ItemInfo lastItem = mItems.get(mItems.size() - 1);
