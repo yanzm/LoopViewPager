@@ -520,6 +520,8 @@ public class LoopViewPager extends ViewGroup {
         if (N == 2 && item < 0) {
             item = mCurItem == 0 ? 1 : 0;
         }
+        // CHNAGE
+        int oldPosition = mCurItem;
         populate(item);
         // CHANGE
         final ItemInfo curInfo = infoForPosition(orgItem);
@@ -528,6 +530,18 @@ public class LoopViewPager extends ViewGroup {
             final int width = getWidth();
             destX = (int) (width * Math.max(mFirstOffset, Math.min(curInfo.offset, mLastOffset)));
         }
+
+        // CHANGE
+        if (mPopulatePending == false && oldPosition != item) {
+            if(N == 2 && item == 1) {
+                oldPosition = -1;
+            }
+            final ItemInfo oldInfo = infoForPosition(oldPosition);
+            final int width = getWidth();
+            int x = (int) (width * Math.max(mFirstOffset, Math.min(oldInfo.offset, mLastOffset)));
+            scrollTo(x, 0);
+        }
+
         if (smoothScroll) {
             smoothScrollTo(destX, 0, velocity);
             if (dispatchSelected && mOnPageChangeListener != null) {
@@ -898,11 +912,24 @@ public class LoopViewPager extends ViewGroup {
         for (curIndex = 0; curIndex < mItems.size(); curIndex++) {
             final ItemInfo ii = mItems.get(curIndex);
             // CHANGE
-            if (ii.position >= mCurItem) {
-                if (ii.position == mCurItem) {
-                    curItem = ii;
-                    break;
-                }
+            if (ii.position == mCurItem) {
+                curItem = ii;
+                break;
+            }
+        }
+        // CHANGE
+        if (curIndex >= mItems.size() && mItems.size() > 0) {
+            int oldPosition = oldCurInfo.position;
+            int f = oldPosition < mCurItem ? oldPosition + N : oldPosition;
+            int l = oldPosition > mCurItem ? oldPosition - N : oldPosition;
+            int fDiff = f - mCurItem;
+            int lDiff = mCurItem - l;
+            if (fDiff < lDiff) {
+                curIndex = 0;
+            } else if (lDiff < fDiff) {
+                curIndex = mItems.size();
+            } else {
+                curIndex = mCurItem < oldPosition ? 0 : mItems.size();
             }
         }
 
@@ -979,10 +1006,16 @@ public class LoopViewPager extends ViewGroup {
                             }
 
                             // ANALYZE 左にスクロールして、右側のページを削除
-                            if (pos == ii.position && !ii.scrolling) {
-                                mItems.remove(itemIndex);
-                                mAdapter.destroyItem(this, pos, ii.object);
-                                ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                            // CHANGE
+                            if (pos == ii.position) {
+                                if (!ii.scrolling) {
+                                    mItems.remove(itemIndex);
+                                    mAdapter.destroyItem(this, pos, ii.object);
+                                    ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                                } else {
+                                    itemIndex++;
+                                    ii = itemIndex < mItems.size() ? mItems.get(itemIndex) : null;
+                                }
                             }
                         } else if (ii != null && pos == ii.position) {
                             extraWidthRight += ii.widthFactor;
@@ -1034,7 +1067,7 @@ public class LoopViewPager extends ViewGroup {
         if (DEBUG) {
             Log.i(TAG, "Current page list:");
             for (int i = 0; i < mItems.size(); i++) {
-                Log.i(TAG, "#" + i + ": page " + mItems.get(i).position);
+                Log.i(TAG, "#" + i + ": page " + mItems.get(i).position + "  offset " + mItems.get(i).offset);
             }
         }
 
@@ -2147,16 +2180,15 @@ public class LoopViewPager extends ViewGroup {
         if (Math.abs(deltaX) > mFlingDistance && Math.abs(velocity) > mMinimumVelocity) {
             targetPage = velocity > 0 ? currentPage : currentPage + 1;
         } else {
-            if(currentPage + pageOffset + 0.5f >= 0f) {
+            if (currentPage + pageOffset + 0.5f >= 0f) {
                 targetPage = (int) (currentPage + pageOffset + 0.5f);
-            }
-            else {
+            } else {
                 targetPage = (int) (currentPage + pageOffset + 0.5f - 1f);
             }
         }
 
         final int N = mAdapter.getCount();
-        
+
         // CHANGE
         if (N == 2) {
             // ページ数2
@@ -2169,7 +2201,7 @@ public class LoopViewPager extends ViewGroup {
                     targetPage = 0;
                 }
             }
-            
+
         } else if (mItems.size() > 0) {
             final ItemInfo firstItem = mItems.get(0);
             final ItemInfo lastItem = mItems.get(mItems.size() - 1);
@@ -2177,12 +2209,12 @@ public class LoopViewPager extends ViewGroup {
             // CHANGE
             if (firstItem.position > lastItem.position) {
                 // 端にいる
-                if(targetPage >= N) {
+                if (targetPage >= N) {
                     targetPage = targetPage % N;
                 }
             }
         }
-        
+
         return targetPage;
     }
 
