@@ -389,22 +389,22 @@ public class LoopViewPager extends ViewGroup {
             mAdapter.startUpdate(this);
             for (int i = 0; i < mItems.size(); i++) {
                 final ItemInfo ii = mItems.get(i);
-                if(ii.position < 0 && ii.object == null) {
+                if (ii.position < 0 && ii.object == null) {
                     // 左側のダミーページ
                     continue;
                 }
                 mAdapter.destroyItem(this, ii.position, ii.object);
             }
             // 左側のダミーページを削除
-            if(mAdapter.getCount() == 2) {
-                for(int i = 0; i < getChildCount(); i++) {
+            if (mAdapter.getCount() == 2) {
+                for (int i = 0; i < getChildCount(); i++) {
                     View child = getChildAt(i);
-                    if(isDummy(child)) {
+                    if (isDummy(child)) {
                         removeView(child);
                     }
                 }
             }
-            
+
             mAdapter.finishUpdate(this);
             mItems.clear();
             removeNonDecorViews();
@@ -532,13 +532,13 @@ public class LoopViewPager extends ViewGroup {
         // CHANGE
         int orgItem = item;
         if (N == 2) {
-            if(item < 0) {
+            if (item < 0) {
                 item = mCurItem == 0 ? 1 : 0;
-            } else if(item >= N) {
+            } else if (item >= N) {
                 item = N - 1;
             }
         }
-        
+
         // CHNAGE
         int oldPosition = mCurItem;
         populate(item);
@@ -552,11 +552,11 @@ public class LoopViewPager extends ViewGroup {
 
         // CHANGE
         if (mPopulatePending == false && oldPosition != item) {
-            if(N == 2 && item == 1) {
+            if (N == 2 && item == 1) {
                 oldPosition = -1;
             }
             final ItemInfo oldInfo = infoForPosition(oldPosition);
-            if(oldInfo != null) {
+            if (oldInfo != null) {
                 final int width = getWidth();
                 int x = (int) (width * Math.max(mFirstOffset, Math.min(oldInfo.offset, mLastOffset)));
                 scrollTo(x, 0);
@@ -839,10 +839,9 @@ public class LoopViewPager extends ViewGroup {
                     isUpdating = true;
                 }
 
-                if(ii.position < 0 && ii.object == null) {
+                if (ii.position < 0 && ii.object == null) {
                     // 左側のダミーページを
-                }
-                else {
+                } else {
                     mAdapter.destroyItem(this, ii.position, ii.object);
                 }
                 needPopulate = true;
@@ -879,11 +878,11 @@ public class LoopViewPager extends ViewGroup {
                 final View child = getChildAt(i);
 
                 // 左側のダミーページを削除
-                if(isDummy(child)) {
+                if (isDummy(child)) {
                     removeView(child);
                     continue;
                 }
-                
+
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
                 if (!lp.isDecor) {
                     lp.widthFactor = 0.f;
@@ -950,9 +949,9 @@ public class LoopViewPager extends ViewGroup {
                 break;
             }
         }
-        
+
         // CHANGE
-        if (curIndex >= mItems.size() && mItems.size() > 0) {
+        if (curIndex >= mItems.size() && mItems.size() > 0 && oldCurInfo != null) {
             int oldPosition = oldCurInfo.position;
             int f = oldPosition < mCurItem ? oldPosition + N : oldPosition;
             int l = oldPosition > mCurItem ? oldPosition - N : oldPosition;
@@ -1353,22 +1352,22 @@ public class LoopViewPager extends ViewGroup {
             }
         }
     }
-    
-    private boolean isDummy (View child) {
-        if(!(child instanceof ImageView)) {
+
+    private boolean isDummy(View child) {
+        if (!(child instanceof ImageView)) {
             return false;
         }
 
         Object tag = child.getTag();
 
-        if(tag == null) {
+        if (tag == null) {
             return false;
         }
-        
-        if(!(tag instanceof Integer)) {
+
+        if (!(tag instanceof Integer)) {
             return false;
         }
-        
+
         int index = (Integer) tag;
         return index == -1;
     }
@@ -1376,26 +1375,15 @@ public class LoopViewPager extends ViewGroup {
     ItemInfo infoForChild(View child) {
         // CHANGE
         final int N = mAdapter.getCount();
-        if (N == 2) {
-            boolean isDummy = isDummy(child);
-
-            for (int i = 0; i < mItems.size(); i++) {
-                ItemInfo ii = mItems.get(i);
-                // CHANGE
-                if (isDummy && ii.position == -1) {
-                    return ii;
-                }
-                if (ii.position != -1 && mAdapter.isViewFromObject(child, ii.object)) {
-                    return ii;
-                }
-            }
-            return null;
-        }
+        boolean isDummy = isDummy(child);
 
         for (int i = 0; i < mItems.size(); i++) {
             ItemInfo ii = mItems.get(i);
             // CHANGE
-            if (mAdapter.isViewFromObject(child, ii.object)) {
+            if (isDummy && ii.position == -1) {
+                return ii;
+            }
+            if (ii.position != -1 && mAdapter.isViewFromObject(child, ii.object)) {
                 return ii;
             }
         }
