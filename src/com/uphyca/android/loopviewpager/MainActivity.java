@@ -25,7 +25,8 @@ public class MainActivity extends Activity implements TabListener {
         int pgaeNum = 2;
         
         mPager = (LoopViewPager) findViewById(R.id.pager);
-        mPager.setAdapter(new MyFragmentStatePagerAdapter(getFragmentManager(), pgaeNum));
+        final MyFragmentStatePagerAdapter adapter = new MyFragmentStatePagerAdapter(getFragmentManager(), pgaeNum);
+        mPager.setAdapter(adapter);
 //        pager.setAdapter(new MyPagerAdapter());
         
         ActionBar actionBar = getActionBar();
@@ -33,6 +34,24 @@ public class MainActivity extends Activity implements TabListener {
         for(int i = 0; i < pgaeNum; i++) {
             actionBar.addTab(actionBar.newTab().setText(i + "").setTabListener(this));
         }
+        
+        findViewById(R.id.button1).setOnClickListener(new View.OnClickListener() {
+            
+            @Override
+            public void onClick(View v) {
+                adapter.addPage();
+                adapter.notifyDataSetChanged();
+            }
+        });
+        
+        findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
+            
+            @Override
+            public void onClick(View v) {
+                adapter.removePage();
+                adapter.notifyDataSetChanged();
+            }
+        });
     }
 
     class MyFragmentStatePagerAdapter extends FragmentStatePagerAdapter {
@@ -52,6 +71,21 @@ public class MainActivity extends Activity implements TabListener {
         @Override
         public int getCount() {
             return mPageNum;
+        }
+        
+        @Override
+        public int getItemPosition(Object object) {
+            return POSITION_NONE;
+        }
+        
+        public void addPage() {
+            mPageNum++;
+        }
+        
+        public void removePage() {
+            if(mPageNum > 1) {
+                mPageNum--;
+            }
         }
     }
 

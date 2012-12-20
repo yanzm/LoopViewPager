@@ -389,8 +389,22 @@ public class LoopViewPager extends ViewGroup {
             mAdapter.startUpdate(this);
             for (int i = 0; i < mItems.size(); i++) {
                 final ItemInfo ii = mItems.get(i);
+                if(ii.position < 0 && ii.object == null) {
+                    // 左側のダミーページ
+                    continue;
+                }
                 mAdapter.destroyItem(this, ii.position, ii.object);
             }
+            // 左側のダミーページを削除
+            if(mAdapter.getCount() == 2) {
+                for(int i = 0; i < getChildCount(); i++) {
+                    View child = getChildAt(i);
+                    if(isDummy(child)) {
+                        removeView(child);
+                    }
+                }
+            }
+            
             mAdapter.finishUpdate(this);
             mItems.clear();
             removeNonDecorViews();
@@ -517,9 +531,14 @@ public class LoopViewPager extends ViewGroup {
         final boolean dispatchSelected = mCurItem != item;
         // CHANGE
         int orgItem = item;
-        if (N == 2 && item < 0) {
-            item = mCurItem == 0 ? 1 : 0;
+        if (N == 2) {
+            if(item < 0) {
+                item = mCurItem == 0 ? 1 : 0;
+            } else if(item >= N) {
+                item = N - 1;
+            }
         }
+        
         // CHNAGE
         int oldPosition = mCurItem;
         populate(item);
@@ -537,9 +556,11 @@ public class LoopViewPager extends ViewGroup {
                 oldPosition = -1;
             }
             final ItemInfo oldInfo = infoForPosition(oldPosition);
-            final int width = getWidth();
-            int x = (int) (width * Math.max(mFirstOffset, Math.min(oldInfo.offset, mLastOffset)));
-            scrollTo(x, 0);
+            if(oldInfo != null) {
+                final int width = getWidth();
+                int x = (int) (width * Math.max(mFirstOffset, Math.min(oldInfo.offset, mLastOffset)));
+                scrollTo(x, 0);
+            }
         }
 
         if (smoothScroll) {
@@ -818,7 +839,12 @@ public class LoopViewPager extends ViewGroup {
                     isUpdating = true;
                 }
 
-                mAdapter.destroyItem(this, ii.position, ii.object);
+                if(ii.position < 0 && ii.object == null) {
+                    // 左側のダミーページを
+                }
+                else {
+                    mAdapter.destroyItem(this, ii.position, ii.object);
+                }
                 needPopulate = true;
 
                 if (mCurItem == ii.position) {
@@ -851,6 +877,13 @@ public class LoopViewPager extends ViewGroup {
             final int childCount = getChildCount();
             for (int i = 0; i < childCount; i++) {
                 final View child = getChildAt(i);
+
+                // 左側のダミーページを削除
+                if(isDummy(child)) {
+                    removeView(child);
+                    continue;
+                }
+                
                 final LayoutParams lp = (LayoutParams) child.getLayoutParams();
                 if (!lp.isDecor) {
                     lp.widthFactor = 0.f;
@@ -917,6 +950,7 @@ public class LoopViewPager extends ViewGroup {
                 break;
             }
         }
+        
         // CHANGE
         if (curIndex >= mItems.size() && mItems.size() > 0) {
             int oldPosition = oldCurInfo.position;
@@ -1319,20 +1353,31 @@ public class LoopViewPager extends ViewGroup {
             }
         }
     }
+    
+    private boolean isDummy (View child) {
+        if(!(child instanceof ImageView)) {
+            return false;
+        }
+
+        Object tag = child.getTag();
+
+        if(tag == null) {
+            return false;
+        }
+        
+        if(!(tag instanceof Integer)) {
+            return false;
+        }
+        
+        int index = (Integer) tag;
+        return index == -1;
+    }
 
     ItemInfo infoForChild(View child) {
         // CHANGE
         final int N = mAdapter.getCount();
         if (N == 2) {
-            boolean isDummy = false;
-            Object tag = child.getTag();
-            if (tag != null && tag instanceof Integer) {
-                int index = (Integer) tag;
-                if (index == -1) {
-                    // ダミーのビュー
-                    isDummy = true;
-                }
-            }
+            boolean isDummy = isDummy(child);
 
             for (int i = 0; i < mItems.size(); i++) {
                 ItemInfo ii = mItems.get(i);
