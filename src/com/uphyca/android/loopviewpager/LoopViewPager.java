@@ -959,7 +959,7 @@ public class LoopViewPager extends ViewGroup {
         }
 
         // CHANGE
-        if (curIndex >= mItems.size() && mItems.size() > 0) {
+        if (curIndex >= mItems.size() && mItems.size() > 0 && oldCurInfo != null) {
             int oldPosition = oldCurInfo.position;
             int f = oldPosition < mCurItem ? oldPosition + N : oldPosition;
             int l = oldPosition > mCurItem ? oldPosition - N : oldPosition;
@@ -1395,26 +1395,15 @@ public class LoopViewPager extends ViewGroup {
     ItemInfo infoForChild(View child) {
         // CHANGE
         final int N = mAdapter.getCount();
-        if (N == 2) {
-            boolean isDummy = isDummy(child);
-
-            for (int i = 0; i < mItems.size(); i++) {
-                ItemInfo ii = mItems.get(i);
-                // CHANGE
-                if (isDummy && ii.position == -1) {
-                    return ii;
-                }
-                if (ii.position != -1 && mAdapter.isViewFromObject(child, ii.object)) {
-                    return ii;
-                }
-            }
-            return null;
-        }
+        boolean isDummy = isDummy(child);
 
         for (int i = 0; i < mItems.size(); i++) {
             ItemInfo ii = mItems.get(i);
             // CHANGE
-            if (mAdapter.isViewFromObject(child, ii.object)) {
+            if (isDummy && ii.position == -1) {
+                return ii;
+            }
+            if (ii.position != -1 && mAdapter.isViewFromObject(child, ii.object)) {
                 return ii;
             }
         }
