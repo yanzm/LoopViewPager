@@ -8,6 +8,7 @@ import android.app.Fragment;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
 import android.os.Bundle;
+import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,37 +16,39 @@ import android.widget.TextView;
 
 public class MainActivity extends Activity implements TabListener {
 
-    LoopViewPager mPager;
-    
+     LoopViewPager mPager;
+//    ViewPager mPager;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        int pgaeNum = 2;
-        
-        mPager = (LoopViewPager) findViewById(R.id.pager);
+        int pgaeNum = 3;
+
+//        mPager = (ViewPager) findViewById(R.id.pager);
+         mPager = (LoopViewPager) findViewById(R.id.pager);
         final MyFragmentStatePagerAdapter adapter = new MyFragmentStatePagerAdapter(getFragmentManager(), pgaeNum);
         mPager.setAdapter(adapter);
-//        pager.setAdapter(new MyPagerAdapter());
-        
+        // pager.setAdapter(new MyPagerAdapter());
+
         ActionBar actionBar = getActionBar();
         actionBar.setNavigationMode(ActionBar.NAVIGATION_MODE_TABS);
-        for(int i = 0; i < pgaeNum; i++) {
+        for (int i = 0; i < pgaeNum; i++) {
             actionBar.addTab(actionBar.newTab().setText(i + "").setTabListener(this));
         }
-        
+
         findViewById(R.id.button1).setOnClickListener(new View.OnClickListener() {
-            
+
             @Override
             public void onClick(View v) {
                 adapter.addPage();
                 adapter.notifyDataSetChanged();
             }
         });
-        
+
         findViewById(R.id.button2).setOnClickListener(new View.OnClickListener() {
-            
+
             @Override
             public void onClick(View v) {
                 adapter.removePage();
@@ -56,8 +59,17 @@ public class MainActivity extends Activity implements TabListener {
 
     class MyFragmentStatePagerAdapter extends FragmentStatePagerAdapter {
 
+        public float getPageWidth(int position) {
+            // TODO Auto-generated method stub
+            super.getPageWidth(position);
+            if (position == 1) {
+                return 0.78f;
+            } else
+                return 1.0f;
+        }
+
         int mPageNum = 0;
-        
+
         public MyFragmentStatePagerAdapter(FragmentManager fm, int pageNum) {
             super(fm);
             mPageNum = pageNum;
@@ -72,18 +84,18 @@ public class MainActivity extends Activity implements TabListener {
         public int getCount() {
             return mPageNum;
         }
-        
+
         @Override
         public int getItemPosition(Object object) {
             return POSITION_NONE;
         }
-        
+
         public void addPage() {
             mPageNum++;
         }
-        
+
         public void removePage() {
-            if(mPageNum > 1) {
+            if (mPageNum > 1) {
                 mPageNum--;
             }
         }
@@ -146,7 +158,7 @@ public class MainActivity extends Activity implements TabListener {
     @Override
     public void onTabReselected(Tab tab, FragmentTransaction ft) {
         // TODO Auto-generated method stub
-        
+
     }
 
     @Override
@@ -158,6 +170,6 @@ public class MainActivity extends Activity implements TabListener {
     @Override
     public void onTabUnselected(Tab tab, FragmentTransaction ft) {
         // TODO Auto-generated method stub
-        
+
     }
 }
