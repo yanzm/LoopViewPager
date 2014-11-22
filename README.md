@@ -3,7 +3,7 @@ LoopViewPager
 ループできる ViewPager です。  
 Support Package v4 の ViewPager の代わりに使います。
 
-r11 の Suppor Pakcage v4 の ViewPager のコードをベースに変更しています。
+r11 の Suppor Package v4 の ViewPager のコードをベースに変更しています。
 PagerAdapter を継承したアダプターの使い方は今まで通りです。
   
 使い方
