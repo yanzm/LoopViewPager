@@ -1,0 +1,15 @@
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'net.yanzm'
+            artifactId project.name
+            version android.defaultConfig.versionName
+            artifact source: file("${project.buildDir}/outputs/aar/${project.name}-release.aar")
+        }
+    }
+    repositories {
+        maven {
+            url "file:${rootDir}/maven-repo"
+        }
+    }
+}
